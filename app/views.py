@@ -1,14 +1,14 @@
 import os
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, Flask
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from app.models import UserProfile
 from app.forms import LoginForm
 from app import db
-from app.models import User 
 from app.models import UserProfile
 from werkzeug.security import check_password_hash
+from .forms import UploadForm, LoginForm
 
 
 ###
@@ -26,19 +26,48 @@ def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
 
+UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg'}
+
+# Create the app instance
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Ensure the upload folder exists
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# Function to check allowed file types
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=['POST', 'GET'])
+@login_required
 def upload():
     # Instantiate your form class
+    form = UploadForm()
+
 
     # Validate file upload on submit
     if form.validate_on_submit():
         # Get file data and save to your uploads folder
+        file = form.image.data
 
+        
+        # Secure the filename to prevent directory traversal attacks
+        filename = secure_filename(file.filename)
+
+        # Check if the file is allowed
+        if not allowed_file(filename):
+            flash('Invalid file type. Only image files (jpg, png, jpeg, gif) are allowed.', 'danger')
+            return redirect(url_for('upload'))
+        
+        # Save the file to the upload folder
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        
         flash('File Saved', 'success')
         return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
 
-    return render_template('upload.html')
+    return render_template("upload.html", form=form)
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -59,7 +88,7 @@ def login():
             # User is authenticated, log them in
             login_user(user)
             flash('You have successfully logged in!', 'success')  # Flash success message
-            return redirect(url_for("upload"))  # Redirect to the home page
+            return redirect(url_for('upload.html'))  # Redirect to the home page
         else:
             # If username or password is incorrect, flash an error message
             flash('Invalid username or password', 'danger')
@@ -73,8 +102,12 @@ def login():
         login_user(user)
 
         # Remember to flash a message to the user
-        return redirect(url_for("upload.html"))  # The user should be redirected to the upload form instead
+        return redirect(url_for('upload'))  # The user should be redirected to the upload form instead
     return render_template("login.html", form=form)
+
+# @app.route('/upload', methods=['GET', 'POST'])
+# def upload():
+#     return render_template('upload.html')  # Render the upload page template
 
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
