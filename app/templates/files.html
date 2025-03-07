@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block main %}
+  <h1>Uploaded Images</h1>
+  {% if images %}
+    <div class="row">
+      {% for image in images %}
+        <div class="col-md-4 col-sm-6 mb-4"> <!-- Adjust column sizes for responsiveness -->
+          <div class="card">
+            <img src="{{ url_for('get_image', filename=image) }}" class="card-img-top" alt="{{ image }}">
+            <div class="card-body">
+              <h5 class="card-title">{{ image }}</h5>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No images uploaded yet.</p>
+  {% endif %}
+{% endblock %}
