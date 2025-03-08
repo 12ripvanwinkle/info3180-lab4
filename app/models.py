@@ -1,5 +1,5 @@
 from . import db
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash,check_password_hash
 
 
 class UserProfile(db.Model):
@@ -21,6 +21,10 @@ class UserProfile(db.Model):
         self.username = username
         # Hash the password before storing it
         self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Check if the provided password matches the stored hashed password"""
+        return check_password_hash(self.password_hash, password)
 
     def is_authenticated(self):
         return True

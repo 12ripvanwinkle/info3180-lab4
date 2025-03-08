@@ -102,7 +102,13 @@ def files():
     print(f"Images to display: {images}")  # Debugging line
     return render_template('files.html', images=images)
 
-
+@app.route('/logout')
+@login_required
+def logout():
+    """Logs out the user and flashes a message."""
+    logout_user()  # Logs out the user
+    flash('You have been logged out successfully!', 'success')  # Flash a success message
+    return redirect(url_for('home'))  # Redirect to the home route
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -133,6 +139,7 @@ def login():
         # passed to the login_user() method below.
 
         # Gets user id, load into session
+        # answer
         login_user(user)
 
         # Remember to flash a message to the user
